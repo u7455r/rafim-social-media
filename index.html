@@ -1,0 +1,371 @@
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rafim Social Media</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--purple:#7655e8;--light:#f4f1ff;--text:#24213a;--muted:#858198}
+body{font-family:Arial,sans-serif;background:#f7f7fb;color:var(--text)}
+button,input,textarea{font:inherit}
+button{cursor:pointer;border:0}
+header{background:white;padding:14px 5%;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px #17102a0d;position:sticky;top:0;z-index:5}
+.logo{font-size:21px;font-weight:900;color:var(--purple)}
+.logo span{color:#27233a}
+#topUser{font-size:13px;color:var(--muted)}
+.container{max-width:850px;margin:25px auto;padding:0 14px}
+.card{background:white;border-radius:17px;padding:19px;margin-bottom:17px;box-shadow:0 5px 22px #21134a09}
+h2{font-size:20px;margin-bottom:14px}
+h3{font-size:16px}
+.muted{color:var(--muted);font-size:13px}
+input,textarea{width:100%;padding:13px;border:1px solid #e6e2f1;border-radius:11px;outline:none;margin:7px 0;background:#fff}
+input:focus,textarea:focus{border-color:var(--purple)}
+textarea{resize:vertical;min-height:95px}
+.btn{background:var(--purple);color:white;padding:12px 17px;border-radius:10px;font-weight:bold}
+.btn.secondary{background:var(--light);color:var(--purple)}
+.btn.danger{background:#fff0f0;color:#d33}
+.btn:disabled{opacity:.5}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px}
+.auth{max-width:410px;margin:55px auto;padding:20px}
+.auth .card{padding:25px}
+.auth button{width:100%;margin-top:9px}
+.hidden{display:none!important}
+.post-head{display:flex;align-items:center;gap:11px;margin-bottom:13px}
+.avatar{width:42px;height:42px;border-radius:50%;background:#eee8ff;color:var(--purple);display:grid;place-items:center;font-weight:bold}
+.post-text{white-space:pre-wrap;line-height:1.6;margin:12px 0}
+.post-actions{display:flex;gap:10px;align-items:center;border-top:1px solid #eee;padding-top:12px;margin-top:12px}
+.post-actions button{background:transparent;color:#68627d;font-weight:bold}
+.post-actions button:hover{color:var(--purple)}
+.comment-list{margin-top:12px}
+.comment{background:#f7f6fb;padding:10px;border-radius:10px;margin-top:7px;font-size:13px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:17px}
+.tabs button{padding:10px 14px;background:white;border-radius:10px;color:var(--text)}
+.tabs button.active{background:var(--purple);color:white}
+.notice{padding:12px;background:#f3efff;border-radius:10px;color:#6447c7;font-size:13px;margin-bottom:14px}
+#message{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#25213b;color:white;padding:12px 18px;border-radius:12px;display:none;z-index:20;max-width:90%;font-size:14px}
+footer{text-align:center;color:var(--muted);padding:25px;font-size:12px}
+@media(max-width:500px){header{padding:13px}.container{margin-top:16px}.card{padding:15px}.logo{font-size:18px}}
+</style>
+</head>
+<body>
+
+<header>
+ <div class="logo">RAFIM <span>SOCIAL</span></div>
+ <div id="topUser">Welcome 👋</div>
+</header>
+
+<section id="authArea" class="auth">
+ <div class="card">
+  <h2 id="authTitle">Welcome Back 👋</h2>
+  <p class="muted" id="authSubtitle">Login to Rafim Social Media</p>
+  <input id="email" type="email" placeholder="Email address">
+  <input id="password" type="password" placeholder="Password">
+  <div id="registerFields" class="hidden">
+   <input id="username" maxlength="30" placeholder="Your username">
+  </div>
+  <button class="btn" id="authButton" onclick="authenticate()">Login</button>
+  <button class="btn secondary" onclick="toggleAuth()" id="toggleButton">Create New Account</button>
+  <p class="muted" style="margin-top:14px">By continuing, you agree to use this community respectfully.</p>
+ </div>
+</section>
+
+<main id="appArea" class="container hidden">
+ <div class="tabs">
+  <button class="active" onclick="showTab('feed',this)">🏠 Feed</button>
+  <button onclick="showTab('profile',this)">👤 Profile</button>
+  <button id="adminTab" class="hidden" onclick="showTab('admin',this)">🛡️ Admin</button>
+  <button onclick="logout()">↪ Logout</button>
+ </div>
+
+ <section id="feedTab">
+  <div class="card">
+   <h2>What's on your mind? 💭</h2>
+   <textarea id="postText" maxlength="3000" placeholder="Share something with the community..."></textarea>
+   <button class="btn" onclick="createPost()">➕ Publish Post</button>
+  </div>
+  <div class="card">
+   <h2>Community Feed 🌍</h2>
+   <p class="muted">Latest community posts</p>
+  </div>
+  <div id="feed"></div>
+ </section>
+
+ <section id="profileTab" class="hidden">
+  <div class="card">
+   <h2>My Profile 👤</h2>
+   <div class="avatar" id="profileAvatar">R</div>
+   <h3 id="profileName" style="margin-top:12px">User</h3>
+   <p class="muted" id="profileEmail"></p>
+   <p class="muted" style="margin-top:10px">Your account is connected to Firebase Authentication.</p>
+  </div>
+ </section>
+
+ <section id="adminTabContent" class="hidden">
+  <div class="card">
+   <h2>🛡️ Admin Dashboard</h2>
+   <div class="notice">Admin access is restricted to the configured administrator email.</div>
+   <div class="actions">
+    <button class="btn" onclick="loadAdmin()">🔄 Refresh Dashboard</button>
+   </div>
+   <h3 style="margin-top:20px">Registered Users</h3>
+   <div id="adminUsers"></div>
+  </div>
+  <div class="card">
+   <h3>Manage Community Posts</h3>
+   <div id="adminPosts"></div>
+  </div>
+ </section>
+</main>
+
+<footer>© 2026 Rafim Social Media • Designed for Community</footer>
+<div id="message"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import {
+ getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+ onAuthStateChanged, signOut
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import {
+ getFirestore, collection, doc, setDoc, getDoc, getDocs,
+ addDoc, deleteDoc, updateDoc
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+const firebaseConfig = {
+ apiKey: "AIzaSyBkvGZ8l9Yx-eVW7VBoRqMxK-OEO3PlcKg",
+ authDomain: "rafim-social-media.firebaseapp.com",
+ projectId: "rafim-social-media",
+ storageBucket: "rafim-social-media.firebasestorage.app",
+ messagingSenderId: "1075520686149",
+ appId: "1:1075520686149:web:25fe02b9b0f2b8f958fb2c",
+ measurementId: "G-11DMS9M9VH"
+};
+
+const ADMIN_EMAIL = "didarulpk11@gmail.com";
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUser = null;
+let isRegister = false;
+let postsCache = [];
+
+const $ = id => document.getElementById(id);
+
+function notify(message){
+ const box=$("message");
+ box.textContent=message;
+ box.style.display="block";
+ setTimeout(()=>box.style.display="none",3000);
+}
+function safe(value){
+ return String(value ?? "").replace(/[&<>"']/g,c=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ }[c]));
+}
+function dateText(value){
+ if(!value) return "Just now";
+ try{
+  const d=typeof value==="number"?new Date(value):value.toDate?value.toDate():new Date(value);
+  return isNaN(d)? "Recently":d.toLocaleString();
+ }catch{return "Recently";}
+}
+window.toggleAuth=()=>{
+ isRegister=!isRegister;
+ $("authTitle").textContent=isRegister?"Create Account 🚀":"Welcome Back 👋";
+ $("authSubtitle").textContent=isRegister?"Join the Rafim community":"Login to Rafim Social Media";
+ $("registerFields").classList.toggle("hidden",!isRegister);
+ $("authButton").textContent=isRegister?"Register":"Login";
+ $("toggleButton").textContent=isRegister?"Already have an account? Login":"Create New Account";
+};
+window.authenticate=async()=>{
+ const email=$("email").value.trim().toLowerCase();
+ const password=$("password").value;
+ try{
+  if(!email||!password) throw new Error("Email and password are required.");
+  if(isRegister){
+   const username=$("username").value.trim();
+   if(username.length<3) throw new Error("Username must be at least 3 characters.");
+   const result=await createUserWithEmailAndPassword(auth,email,password);
+   await setDoc(doc(db,"users",result.user.uid),{
+    uid:result.user.uid,email:result.user.email,username,
+    photoURL:"",createdAt:Date.now()
+   });
+   notify("Account created successfully!");
+  }else{
+   await signInWithEmailAndPassword(auth,email,password);
+   notify("Login successful!");
+  }
+ }catch(e){notify(e.message);}
+};
+onAuthStateChanged(auth,async user=>{
+ currentUser=user;
+ if(user){
+  $("authArea").classList.add("hidden");
+  $("appArea").classList.remove("hidden");
+  $("topUser").textContent=user.email;
+  $("profileEmail").textContent=user.email;
+  $("adminTab").classList.toggle("hidden",user.email!==ADMIN_EMAIL);
+  try{
+   const snap=await getDoc(doc(db,"users",user.uid));
+   const name=snap.exists()?snap.data().username:"Member";
+   $("profileName").textContent=name;
+   $("profileAvatar").textContent=(name||"R")[0].toUpperCase();
+  }catch(e){notify("Profile could not be loaded.");}
+  await loadFeed();
+ }else{
+  $("authArea").classList.remove("hidden");
+  $("appArea").classList.add("hidden");
+  $("topUser").textContent="Welcome 👋";
+ }
+});
+window.logout=async()=>{await signOut(auth);notify("Logged out.");};
+window.showTab=(tab,button)=>{
+ ["feed","profile","adminTabContent"].forEach(id=>$(id).classList.add("hidden"));
+ const target=tab==="admin"?"adminTabContent":tab+"Tab";
+ $(target).classList.remove("hidden");
+ document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+ button.classList.add("active");
+ if(tab==="admin") loadAdmin();
+};
+window.createPost=async()=>{
+ const text=$("postText").value.trim();
+ if(!text)return notify("Write something first.");
+ try{
+  await addDoc(collection(db,"posts"),{
+   authorId:currentUser.uid,text,createdAt:Date.now()
+  });
+  $("postText").value="";
+  notify("Post published!");
+  await loadFeed();
+ }catch(e){notify("Post failed: "+e.message);}
+};
+async function loadFeed(){
+ try{
+  const snap=await getDocs(collection(db,"posts"));
+  postsCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  postsCache.sort((a,b)=>{
+   const x=typeof a.createdAt==="number"?a.createdAt:0;
+   const y=typeof b.createdAt==="number"?b.createdAt:0;
+   return y-x;
+  });
+  $("feed").innerHTML="";
+  if(!postsCache.length){
+   $("feed").innerHTML='<div class="card muted">No posts yet. Be the first to share!</div>';
+   return;
+  }
+  for(const p of postsCache){
+   const userSnap=await getDoc(doc(db,"users",p.authorId));
+   const author=userSnap.exists()?userSnap.data().username:"Member";
+   const card=document.createElement("div");
+   card.className="card";
+   card.innerHTML=`
+    <div class="post-head">
+     <div class="avatar">${safe((author||"M")[0].toUpperCase())}</div>
+     <div><h3>${safe(author)}</h3><p class="muted">${safe(dateText(p.createdAt))}</p></div>
+    </div>
+    <div class="post-text">${safe(p.text)}</div>
+    <div class="post-actions">
+     <button data-like="${safe(p.id)}">♡ Like</button>
+     <button data-comment="${safe(p.id)}">💬 Comment</button>
+     ${p.authorId===currentUser.uid||currentUser.email===ADMIN_EMAIL?`<button class="btn danger" data-delete="${safe(p.id)}">Delete</button>`:""}
+    </div>
+    <div id="comments-${safe(p.id)}" class="comment-list"></div>
+    <div class="actions">
+     <input id="commentInput-${safe(p.id)}" placeholder="Write a comment..." style="flex:1">
+     <button class="btn secondary" data-send="${safe(p.id)}">Send</button>
+    </div>`;
+   $("feed").appendChild(card);
+   await loadComments(p.id);
+  }
+ }catch(e){notify("Feed error: "+e.message);}
+}
+async function loadComments(postId){
+ try{
+  const snap=await getDocs(collection(db,"comments"));
+  const comments=snap.docs.map(d=>({id:d.id,...d.data()})).filter(c=>c.postId===postId);
+  const area=$("comments-"+postId);
+  if(!area)return;
+  area.innerHTML="";
+  for(const c of comments){
+   const u=await getDoc(doc(db,"users",c.authorId));
+   const name=u.exists()?u.data().username:"Member";
+   const item=document.createElement("div");
+   item.className="comment";
+   item.innerHTML=`<b>${safe(name)}:</b> ${safe(c.text)}`;
+   area.appendChild(item);
+  }
+ }catch(e){console.log(e);}
+}
+window.addEventListener("click",async e=>{
+ const like=e.target.closest("[data-like]");
+ const send=e.target.closest("[data-send]");
+ const del=e.target.closest("[data-delete]");
+ if(like){
+  const postId=like.dataset.like;
+  const likeId=postId+"_"+currentUser.uid;
+  try{
+   const ref=doc(db,"likes",likeId);
+   const existing=await getDoc(ref);
+   if(existing.exists()){
+    await deleteDoc(ref);
+    like.textContent="♡ Like";
+   }else{
+    await setDoc(ref,{userId:currentUser.uid,postId,createdAt:Date.now()});
+    like.textContent="♥ Liked";
+   }
+  }catch(e){notify("Like failed: "+e.message);}
+ }
+ if(send){
+  const postId=send.dataset.send;
+  const input=$("commentInput-"+postId);
+  const text=input.value.trim();
+  if(!text)return;
+  try{
+   await addDoc(collection(db,"comments"),{
+    authorId:currentUser.uid,postId,text,createdAt:Date.now()
+   });
+   input.value="";
+   await loadComments(postId);
+   notify("Comment added!");
+  }catch(e){notify("Comment failed: "+e.message);}
+ }
+ if(del){
+  const postId=del.dataset.delete;
+  if(!confirm("Delete this post?"))return;
+  try{
+   await deleteDoc(doc(db,"posts",postId));
+   notify("Post deleted.");
+   await loadFeed();
+  }catch(e){notify("Delete failed: "+e.message);}
+ }
+});
+window.loadAdmin=async()=>{
+ if(!currentUser||currentUser.email!==ADMIN_EMAIL)return notify("Admin access denied.");
+ try{
+  const users=await getDocs(collection(db,"users"));
+  $("adminUsers").innerHTML="";
+  users.forEach(d=>{
+   const u=d.data();
+   const item=document.createElement("div");
+   item.className="comment";
+   item.innerHTML=`<b>${safe(u.username||"Member")}</b><br>${safe(u.email||"")}`;
+   $("adminUsers").appendChild(item);
+  });
+  const snap=await getDocs(collection(db,"posts"));
+  $("adminPosts").innerHTML="";
+  snap.forEach(d=>{
+   const p=d.data();
+   const item=document.createElement("div");
+   item.className="comment";
+   item.innerHTML=`${safe(p.text)}<br><span class="muted">${safe(p.authorId)}</span>
+    <button class="btn danger" style="margin-top:8px" data-delete="${safe(d.id)}">Delete Post</button>`;
+   $("adminPosts").appendChild(item);
+  });
+ }catch(e){notify("Admin panel error: "+e.message);}
+};
+</script>
+</body>
+</html>
